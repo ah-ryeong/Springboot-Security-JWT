@@ -1,5 +1,6 @@
 package com.winter.jwtex01.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,10 +10,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.winter.jwtex01.config.jwt.JwtAuthenticationFilter;
+import com.winter.jwtex01.config.jwt.JwtAuthorizaionFilter;
+import com.winter.jwtex01.repository.UserRepository;
 
 @Configuration
 @EnableWebSecurity // 시큐리티 활성화 -> 기본 스프링 필터체인에 등록
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+	
+	@Autowired
+	private UserRepository userRepository;
 	
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
@@ -28,12 +34,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.formLogin().disable()
 			.httpBasic().disable() // Http Jsession 막음
 			.addFilter(new JwtAuthenticationFilter(authenticationManager())) // 내가 만든 인증필터
-//			.addFilter(null)
+			.addFilter(new JwtAuthorizaionFilter(authenticationManager(), userRepository))
 			.authorizeRequests()
+			.antMatchers("/api/v1/user/**")
+				.access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')") // 막을주소
 			.antMatchers("/api/v1/manager/**")
-				.access("hasRole('Role_MANAGER') or hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')") // 막을주소
+				.access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')") // 막을주소
 			.antMatchers("/api/v1/admin/**")
-				.access("hasRole('Role_ADMIN')") // 막을주소
+				.access("hasRole('ROLE_ADMIN')") // 막을주소
 			.anyRequest().permitAll();
 //		http.cors().disable(); // 모든 도메인에서 자바스크립트로 요청이 가능하다. -> 내 사이트 매우 위험해지기 때문에 절대 걸면 안된다.
 		// 이걸 허용하려면 부분적으로만 허용해야함

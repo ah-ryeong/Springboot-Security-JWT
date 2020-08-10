@@ -2,15 +2,16 @@ package com.winter.jwtex01.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.servlet.http.HttpSession;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.winter.jwtex01.config.auth.SessionUser;
 import com.winter.jwtex01.model.User;
 import com.winter.jwtex01.repository.UserRepository;
 
@@ -33,6 +34,9 @@ public class RestApiController {
 		return "<h1>home</h1>";
 	}
 	
+	// Tip : JWT를 사용하면 UserDetailsService를 호출하지 않기 때문에 @AuthenticationPrincipal 사용 불가능.
+	// 왜냐하면 @AuthenticationPrincipal은 UserDetailsService에서 리턴될 때 만들어지기 때문이다.
+	
 	// 매니저, admin 접근가능
 	@GetMapping("manager/reports")
 	public String reports() {
@@ -51,5 +55,15 @@ public class RestApiController {
 		user.setRoles("ROLE_USER");
 		UserRepository.save(user);
 		return "회원가입완료";
+	}
+	
+	@GetMapping("user")
+	public String user(HttpSession session) {
+		SessionUser sessionUser = (SessionUser) session.getAttribute("sessionUser");
+		System.out.println("principal : " + sessionUser.getId());
+		System.out.println("principal : " + sessionUser.getUsername());
+		System.out.println("principal : " + sessionUser.getRoles());
+		
+		return "<h1>user</h1>";
 	}
 }

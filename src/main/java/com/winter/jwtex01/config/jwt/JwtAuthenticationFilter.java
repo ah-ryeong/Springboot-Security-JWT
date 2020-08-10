@@ -1,7 +1,6 @@
 package com.winter.jwtex01.config.jwt;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 
 import javax.servlet.FilterChain;
@@ -9,7 +8,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,7 +19,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.winter.jwtex01.config.auth.PrincipalDetails;
 import com.winter.jwtex01.dto.LoginRequestDto;
-import com.winter.jwtex01.model.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -54,6 +51,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 						loginRequestDto.getUsername(), // 인증주체, 접근주체 자리, id, password
 						loginRequestDto.getPassword());
 		
+		System.out.println("JwtAuthenticationFilter : 토큰생성완료");
+		
 		// Authenticate() 함수가 호출되면 인증 프로바이더가 
 		// UserDetailService의 loadUerByUsername(토큰의 첫 번째 파라메터)을 호출하고
 		// UserDetails를 리턴받아서 토큰의 두번째 파라메터(credential -> request 받은 값(사용자로부터 받은 값))과 
@@ -81,12 +80,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		
 		String jwtToken = JWT.create()
 				.withSubject(principalDetails.getUsername())
-				.withExpiresAt(new Date(System.currentTimeMillis()+864000000)) // 만료시간
+				.withExpiresAt(new Date(System.currentTimeMillis()+JwtProperties.EXPIRATION_TIME)) // 만료시간
 				.withClaim("id", principalDetails.getUser().getId())
 				.withClaim("username", principalDetails.getUser().getUsername())
-				.sign(Algorithm.HMAC512("MilkTea".getBytes()));
+				.sign(Algorithm.HMAC512(JwtProperties.SECRET)); // MilkTea -> secret값
 		
-		response.addHeader("Authorization", "Bearer "+ jwtToken);
+		response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
 //		super.successfulAuthentication(request, response, chain, authResult);
 	}
 	
